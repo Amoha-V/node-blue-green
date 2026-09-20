@@ -48,8 +48,12 @@ pipeline {
         stage('Health Check Green') {
             steps {
                 bat '''
-                    timeout /t 5 /nobreak
-                    curl http://localhost:3006/health
+                    for /L %%i in (1,1,10) do (
+                        curl -sf http://localhost:3006/health && exit /b 0
+                        ping -n 3 127.0.0.1 >NUL
+                    )
+                    echo Health check failed after retries
+                    exit /b 1
                 '''
             }
         }
