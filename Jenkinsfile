@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE = "amoha385/node-blue-green:latest"
+        DOCKER_CONFIG = "${WORKSPACE}\\.docker"
     }
 
     stages {
@@ -22,9 +23,14 @@ pipeline {
                         passwordVariable: 'DOCKER_PASS'
                     )
                 ]) {
-                    bat 'docker logout'
-                    bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
-                    bat 'docker push %IMAGE%'
+                    bat '''
+                        if exist "%DOCKER_CONFIG%" rmdir /s /q "%DOCKER_CONFIG%"
+                        mkdir "%DOCKER_CONFIG%"
+
+                        echo %DOCKER_PASS% | docker --config "%DOCKER_CONFIG%" login -u %DOCKER_USER% --password-stdin
+
+                        docker --config "%DOCKER_CONFIG%" push %IMAGE%
+                    '''
                 }
             }
         }
